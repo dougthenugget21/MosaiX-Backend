@@ -8,6 +8,6 @@ const api = express();
 api.use(cors());
 api.use(express.json());
 
-api.use("/user", userDetailsRouter);
+api.use("/userData", userDetailsRouter);
 
 module.exports = api;
