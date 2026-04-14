@@ -49,10 +49,10 @@ CREATE TABLE profile_details (
     profile_id SMALLINT GENERATED ALWAYS AS IDENTITY,
     user_id SMALLINT NOT NULL,
     user_name VARCHAR(50) NOT NULL,
-    is_private BOOLEAN NOT NULL,
+    is_private BOOLEAN NOT NULL DEFAULT true,
     bio VARCHAR(255),
     reputation_id SMALLINT,
-    total_likes INT,
+    total_likes INT DEFAULT 0,
     PRIMARY KEY (profile_id),
     FOREIGN KEY (user_id) REFERENCES user_details,
     FOREIGN KEY (reputation_id) REFERENCES reputation_level
@@ -69,8 +69,8 @@ CREATE TABLE user_posts (
     longitude FLOAT NOT NULL,
     latitude FLOAT NOT NULL,
     post_desc VARCHAR(255),
-    like_count INT,
-    created_date TIMESTAMP NOT NULL,
+    like_count INT DEFAULT 0,
+    created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (profile_id) REFERENCES profile_details
 );
@@ -97,7 +97,7 @@ CREATE TABLE post_comments (
     post_id SMALLINT,
     comment VARCHAR(255) NOT NULL,
     by_profile_id SMALLINT,
-    created_date TIMESTAMP,
+    created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (post_id) REFERENCES user_posts,
     FOREIGN KEY (by_profile_id) REFERENCES profile_details 
