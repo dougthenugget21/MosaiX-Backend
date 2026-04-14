@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS user_posts CASCADE;
 
 CREATE TABLE reputation_level (
     id SMALLINT GENERATED ALWAYS AS IDENTITY,
-    reputation_badge VARCHAR(30),
+    reputation_badge VARCHAR(30) NOT NULL,
     from_count INT,
     to_count INT,
     PRIMARY KEY (id)
@@ -27,7 +27,7 @@ CREATE TABLE reputation_level (
 --
 CREATE TABLE tags (
     id SMALLINT GENERATED ALWAYS AS IDENTITY,
-    tag_name VARCHAR(30),
+    tag_name VARCHAR(30) NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -37,8 +37,6 @@ CREATE TABLE tags (
 
 CREATE TABLE user_details (
     user_id SMALLINT GENERATED ALWAYS AS IDENTITY,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
     PRIMARY KEY (user_id)
@@ -50,8 +48,8 @@ CREATE TABLE user_details (
 CREATE TABLE profile_details (
     profile_id SMALLINT GENERATED ALWAYS AS IDENTITY,
     user_id SMALLINT NOT NULL,
-    user_name VARCHAR(50),
-    is_private BOOLEAN,
+    user_name VARCHAR(50) NOT NULL,
+    is_private BOOLEAN NOT NULL,
     bio VARCHAR(255),
     reputation_id SMALLINT,
     total_likes INT,
@@ -67,12 +65,12 @@ CREATE TABLE profile_details (
 CREATE TABLE user_posts (
     id SMALLINT GENERATED ALWAYS AS IDENTITY,
     profile_id SMALLINT,
-    photo_url VARCHAR(255),
-    longitude FLOAT,
-    latitude FLOAT,
+    photo_url VARCHAR(255) NOT NULL,
+    longitude FLOAT NOT NULL,
+    latitude FLOAT NOT NULL,
     post_desc VARCHAR(255),
     like_count INT,
-    created_date DATE,
+    created_date TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (profile_id) REFERENCES profile_details
 );
@@ -96,9 +94,9 @@ CREATE TABLE post_tags (
 CREATE TABLE post_comments (
     id SMALLINT GENERATED ALWAYS AS IDENTITY,
     post_id SMALLINT,
-    comment VARCHAR(255),
+    comment VARCHAR(255) NOT NULL,
     by_profile_id SMALLINT,
-    created_date DATE,
+    created_date TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (post_id) REFERENCES user_posts,
     FOREIGN KEY (by_profile_id) REFERENCES profile_details 
