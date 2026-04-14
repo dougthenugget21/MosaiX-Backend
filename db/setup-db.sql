@@ -84,7 +84,8 @@ CREATE TABLE post_tags (
     post_id SMALLINT,
     hash_tags SMALLINT,
     PRIMARY KEY (id),
-    FOREIGN KEY (post_id) REFERENCES tags
+    FOREIGN KEY (hash_tags) REFERENCES tags,
+    FOREIGN KEY (post_id) REFERENCES user_posts
 );
 
 --
