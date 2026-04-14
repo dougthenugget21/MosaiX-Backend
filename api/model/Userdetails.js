@@ -22,7 +22,7 @@ class Userdetails {
         if(response.rows.length != 1) {
             throw new Error("Cannot find user details with email.")
         }
-        return new Studentdetails(response.rows[0]);
+        return new Userdetails(response.rows[0]);
     }
 
     static async createUser (userData) {
