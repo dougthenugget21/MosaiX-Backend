@@ -1,14 +1,14 @@
 --
 -- Deleting tables if they are already present to recreate
 --
-
-DROP TABLE IF EXISTS user_details;
-DROP TABLE IF EXISTS profile_details;
-DROP TABLE IF EXISTS user_posts;
-DROP TABLE IF EXISTS post_tags;
-DROP TABLE IF EXISTS post_comments;
-DROP TABLE IF EXISTS reputation_level;
-DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS tags CASCADE;
+DROP TABLE IF EXISTS reputation_level CASCADE;
+DROP TABLE IF EXISTS profile_details CASCADE;
+DROP TABLE IF EXISTS user_details CASCADE;
+DROP TABLE IF EXISTS post_tags CASCADE;
+DROP TABLE IF EXISTS post_comments CASCADE;
+DROP TABLE IF EXISTS saved_posts CASCADE;
+DROP TABLE IF EXISTS user_posts CASCADE;
 
 --
 -- Create Master table - Reputation Level
@@ -18,7 +18,7 @@ CREATE TABLE reputation_level (
     id SMALLINT GENERATED ALWAYS AS IDENTITY,
     reputation_badge VARCHAR(30),
     from_count INT,
-    to_count INT
+    to_count INT,
     PRIMARY KEY (id)
 );
 
@@ -27,9 +27,9 @@ CREATE TABLE reputation_level (
 --
 CREATE TABLE tags (
     id SMALLINT GENERATED ALWAYS AS IDENTITY,
-    tag_name VARCHAR(30)
+    tag_name VARCHAR(30),
     PRIMARY KEY (id)
-)
+);
 
 --
 -- Create user details table
@@ -37,8 +37,8 @@ CREATE TABLE tags (
 
 CREATE TABLE user_details (
     user_id SMALLINT GENERATED ALWAYS AS IDENTITY,
-    first_name VARCHAR(30) NOT NULL,
-    last_name VARCHAR(30) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
     PRIMARY KEY (user_id)
@@ -72,7 +72,7 @@ CREATE TABLE user_posts (
     latitude FLOAT,
     post_desc VARCHAR(255),
     like_count INT,
-    created_date DATE
+    created_date DATE,
     PRIMARY KEY (id),
     FOREIGN KEY (profile_id) REFERENCES profile_details
 );
@@ -102,4 +102,17 @@ CREATE TABLE post_comments (
     PRIMARY KEY (id),
     FOREIGN KEY (post_id) REFERENCES user_posts,
     FOREIGN KEY (by_profile_id) REFERENCES profile_details 
+);
+
+-- 
+-- Create table for Saved Posts
+--
+
+CREATE TABLE saved_posts (
+    id SMALLINT GENERATED ALWAYS AS IDENTITY,
+    profile_id SMALLINT,
+    post_id SMALLINT,
+    PRIMARY KEY (id),
+    FOREIGN KEY (profile_id) REFERENCES profile_details,
+    FOREIGN KEY (post_id) REFERENCES user_posts
 );
