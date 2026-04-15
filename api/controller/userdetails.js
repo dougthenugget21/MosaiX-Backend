@@ -6,7 +6,6 @@ const Userdetails = require('../model/Userdetails');
 
 async function getUserDetailsbyEmail (req, res) {
     try {
-        console.log('Hi');
         const data = req.body;
         const user = await Userdetails.getUserDetailsbyEmail(data.email);
         if(!user) {

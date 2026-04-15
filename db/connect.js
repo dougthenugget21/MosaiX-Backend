@@ -3,7 +3,9 @@ const { Pool } = require('pg') // A js object that holds the code to make and br
 require('dotenv').config()
 
 const db = new Pool({
-    connectionString: process.env.DB_URL
+  connectionString: process.env.NODE_ENV === "test"
+    ? process.env.DB_TEST_URL
+    : process.env.DB_URL
 })
 
 module.exports = db
