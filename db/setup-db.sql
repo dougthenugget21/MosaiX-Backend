@@ -115,3 +115,12 @@ CREATE TABLE saved_posts (
     FOREIGN KEY (profile_id) REFERENCES profile_details,
     FOREIGN KEY (post_id) REFERENCES user_posts
 );
+
+CREATE TABLE liked_posts (
+    id SMALLINT GENERATED ALWAYS AS IDENTITY,
+    profile_id SMALLINT,
+    post_id SMALLINT,
+    PRIMARY KEY (id),
+    FOREIGN KEY (profile_id) REFERENCES profile_details,
+    FOREIGN KEY (post_id) REFERENCES user_posts
+);
