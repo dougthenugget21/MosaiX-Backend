@@ -1,4 +1,5 @@
 const db = require('../../db/connect')
+const { post } = require('../routes/userPosts')
 class Posts {
     
     constructor(data){
@@ -7,13 +8,138 @@ class Posts {
         this.photo_url = data.photo_url
         this.longitude = data.longitude
         this.latitude = data.latitude  
+        this.title = data.title
         this.post_desc = data.post_desc
-        this.like_count = data.like_count ?? 0;
+        this.like_count = data.like_count ?? 0
         this.created_date = data.created_date
+        this.tags = data.tags
+        this.profilephoto_url = data.profilephoto_url
+        this.reputation_badge = data.reputation_badge
+        this.user_name = data.user_name
     }
+
+    //getting a specific post
+    static async getByPostId(postId){
+        const response = await db.query(`SELECT user_posts.id,profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date,     STRING_AGG(tag_name,',') as tags
+                                        FROM user_posts
+                                        JOIN post_tags
+                                        ON post_tags.post_id = user_posts.id
+                                        JOIN tags
+                                        ON post_tags.hash_tags = tags.id
+                                        WHERE user_posts.id = $1
+                                        GROUP BY user_posts.id
+                                        `,[postId])
+        const post_data = response.rows[0]
+        if(response.rows.length===0){
+            throw new Error('This post cannot be found')
+        }
+        //return an array of tags but the tags have to be retrieved from post_tags and then tags table 
+        let tagArray = post_data.tags.split(",")       
+        post_data.tags = tagArray
+        //sql query to profile table to return profile user name, profile photo  reputation and isprive
+
+        const profileResponse = await db.query(`
+            SELECT profilephoto_url,reputation_badge,
+            CASE 
+            WHEN is_private = true THEN 'Anonymous' 
+            ELSE user_name
+            END AS user_name
+            FROM profile_details
+            JOIN reputation_level
+            ON reputation_level.id = profile_details.reputation_id
+            WHERE profile_details.user_id = $1
+            `,[post_data.profile_id])
+        post_data.profilephoto_url = profileResponse.rows[0].profilephoto_url
+        post_data.user_name = profileResponse.rows[0].user_name
+        post_data.reputation_badge = profileResponse.rows[0].user_name
+        return new Posts(post_data)
+    }
+
+    // getting all the posts from one specific profileb for their profile
+    static async getAllByProfileId(profileId){
+        const response = await db.query(`SELECT user_posts.id,profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date,     STRING_AGG(tag_name,',') as tags
+                                        FROM user_posts
+                                        JOIN post_tags
+                                        ON post_tags.post_id = user_posts.id
+                                        JOIN tags
+                                        ON post_tags.hash_tags = tags.id
+                                        WHERE profile_id = $1
+                                        GROUP BY user_posts.id
+                                        `,[profileId])
+        const post_data = response.rows
+        
+        if(response.rows.length===0){
+            throw new Error('This post cannot be found')
+        }
+        //sql query to profile table to return profile user name, profile photo  reputation and isprive
+        const profileResponse = await db.query(`
+            SELECT profilephoto_url,reputation_badge, user_name
+            FROM profile_details
+            JOIN reputation_level
+            ON reputation_level.id = profile_details.reputation_id
+            WHERE profile_details.user_id = $1
+            `,[post_data[0].profile_id])
+        
+        post_data.forEach((record) => {
+            let tagArray = record.tags.split(",")       
+            record.tags = tagArray
+            record.profilephoto_url = profileResponse.rows[0].profilephoto_url
+            record.user_name = profileResponse.rows[0].user_name
+            record.reputation_badge = profileResponse.rows[0].reputation_badge
+        })
+        // if isprivate then change profile user name to Anonymous 
+        return post_data.map(p => new Posts(p))
+    }
+
     // Get posts based on latitude and longitude and radius inputted 
+    static async getNearbyPosts(lat,long,dist){
+        const response = await db.query(`
+        SELECT posts.id,posts.profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date, STRING_AGG(tag_name,',') as tags,profilephoto_url,reputation_badge,
+        CASE 
+        WHEN profile_details.is_private = true
+        THEN 'Anonymous'
+        ELSE user_name
+        END as user_name
+        FROM (
+            SELECT *,
+                (
+                    6371 * acos(
+                        LEAST(1, GREATEST(-1,
+                            cos(radians($1)) *
+                            cos(radians(latitude)) *
+                            cos(radians(longitude) - radians($2)) +
+                            sin(radians($1)) *
+                            sin(radians(latitude))
+                        ))
+                    )
+                ) AS distance_km
+            FROM user_posts
+        ) AS posts
+        JOIN post_tags
+        ON post_tags.post_id = posts.id
+        JOIN tags
+        ON post_tags.hash_tags = tags.id
+        JOIN profile_details
+        ON posts.profile_id = profile_details.profile_id
+        JOIN reputation_level
+        ON reputation_level.id = profile_details.reputation_id
+        WHERE distance_km < $3
+        GROUP BY posts.id,posts.profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date, distance_km,profile_details.profilephoto_url,reputation_level.reputation_badge,profile_details.is_private,profile_details.user_name
+        ORDER BY distance_km ASC`,
+        [lat, long, dist]
+        )  
+        let post_data = response.rows
+        post_data.forEach((record) => {
+            let tagArray = record.tags.split(",")
+            record.tags = tagArray
+        })
+        return post_data.map(p => new Posts(p))
+    }
+    //deleting a post by it's id
 
-
+    async deletePost(){
+        const response = await db.query("DELETE FROM user_posts")
+    }
     //editing the number of likes on a post when someone adds a like
     async increaseLikeCount(){
         const response = await db.query("UPDATE user_posts SET like_count = like_count + 1 WHERE id = $1 RETURNING *",[this.id])
@@ -34,33 +160,11 @@ class Posts {
         return response.rows.map(p => new Posts(p))
     }
 
-    //getting a specific post
-    static async getByPostId(postId){
-        console.log(postId);
-        const response = await db.query("SELECT * from user_posts WHERE id = $1",[postId])
-        if(response.rows.length===0){
-            throw new Error('This post cannot be found')
-        }
-        const post = new Posts(response.rows[0])
-        return post
-    }
-
-    // getting all the posts from one specific profile
-    static async getAllByProfileId(profileId){
-        const response = await db.query("SELECT * from user_posts WHERE profile_id = $1",[profileId])
-        if(response.rows.length===0){
-            throw new Error('This profile cannot be found')
-        }
-        return response.rows.map(p => new Posts(p))
-    }
-    
-    
-
 
 
     //Creating a new post
     static async createPost(post_data){
-        const {profile_id,photo_url,longitude,latitude,post_desc} = post_data
+        const {profile_id,photo_url,longitude,latitude,title,post_desc} = post_data
         if(!profile_id){throw new Error ('profile id is missing')}
         if(!photo_url){throw new Error('photo url is is missing')}
         
@@ -68,9 +172,10 @@ class Posts {
             throw new Error('longitude or latitude is missing')
         }
         const response = await db.query(
-            `INSERT INTO user_posts (profile_id,photo_url,longitude,latitude,post_desc,created_date) VALUES ($1,$2,$3,$4,$5) RETURNING *;`, [profile_id,photo_url,longitude,latitude,post_desc]
+            `INSERT INTO user_posts (profile_id,photo_url,longitude,latitude,title, post_desc,created_date) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;`, [profile_id,photo_url,longitude,latitude,title,post_desc]
         )
         return new Posts(response.rows[0])
     }
+
 }
 module.exports = Posts
