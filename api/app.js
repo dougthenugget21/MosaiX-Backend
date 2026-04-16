@@ -5,6 +5,7 @@ const userDetailsRouter = require('./routes/userdetails');
 const profileDetailsRouter = require('./routes/profiledetails');
 const userProfileRouter = require('./routes/userprofile');
 const postRouter = require('./routes/userPosts')
+const commentRouter = require('./routes/postcomments')
 
 const api = express();
 
@@ -17,5 +18,6 @@ api.use("/userProfile", userProfileRouter)
 api.use("/posts", postRouter)
 
 
+api.use("/comment",commentRouter)
 
 module.exports = api;
