@@ -8,5 +8,6 @@ postRouter.get('/profile/:id',postController.getByProfileId)
 postRouter.get('/nearby',postController.getNearbyPosts)
 postRouter.patch('/:id',postController.increaseLikes)
 postRouter.post('/new', postController.createPost)
+postRouter.delete('/delete/:id',postController.deletePost)
 
 module.exports =  postRouter
