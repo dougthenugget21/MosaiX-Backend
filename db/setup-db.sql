@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS post_tags CASCADE;
 DROP TABLE IF EXISTS post_comments CASCADE;
 DROP TABLE IF EXISTS saved_posts CASCADE;
 DROP TABLE IF EXISTS user_posts CASCADE;
+DROP TABLE IF EXISTS reported_posts CASCADE;
+DROP TABLE IF EXISTS liked_posts CASCADE;
 
 --
 -- Create Master table - Reputation Level
@@ -51,6 +53,7 @@ CREATE TABLE profile_details (
     user_name VARCHAR(50) NOT NULL,
     is_private BOOLEAN NOT NULL DEFAULT true,
     bio VARCHAR(255),
+    profilephoto_url VARCHAR(255) NOT NULL,
     reputation_id SMALLINT,
     total_likes INT DEFAULT 0,
     PRIMARY KEY (profile_id),
@@ -68,11 +71,12 @@ CREATE TABLE user_posts (
     photo_url VARCHAR(255) NOT NULL,
     longitude FLOAT NOT NULL,
     latitude FLOAT NOT NULL,
+    post_title VARCHAR(255) NOT NULL,
     post_desc VARCHAR(255),
     like_count INT DEFAULT 0,
     created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    FOREIGN KEY (profile_id) REFERENCES profile_details
+    FOREIGN KEY (profile_id) REFERENCES profile_details ON DELETE CASCADE
 );
 
 --
@@ -85,7 +89,7 @@ CREATE TABLE post_tags (
     hash_tags SMALLINT,
     PRIMARY KEY (id),
     FOREIGN KEY (hash_tags) REFERENCES tags,
-    FOREIGN KEY (post_id) REFERENCES user_posts
+    FOREIGN KEY (post_id) REFERENCES user_posts ON DELETE CASCADE
 );
 
 --
@@ -99,8 +103,8 @@ CREATE TABLE post_comments (
     by_profile_id SMALLINT,
     created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    FOREIGN KEY (post_id) REFERENCES user_posts,
-    FOREIGN KEY (by_profile_id) REFERENCES profile_details 
+    FOREIGN KEY (post_id) REFERENCES user_posts ON DELETE CASCADE,
+    FOREIGN KEY (by_profile_id) REFERENCES profile_details ON DELETE CASCADE 
 );
 
 -- 
@@ -112,8 +116,8 @@ CREATE TABLE saved_posts (
     profile_id SMALLINT,
     post_id SMALLINT,
     PRIMARY KEY (id),
-    FOREIGN KEY (profile_id) REFERENCES profile_details,
-    FOREIGN KEY (post_id) REFERENCES user_posts
+    FOREIGN KEY (profile_id) REFERENCES profile_details ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES user_posts ON DELETE CASCADE
 );
 
 CREATE TABLE liked_posts (
@@ -121,6 +125,17 @@ CREATE TABLE liked_posts (
     profile_id SMALLINT,
     post_id SMALLINT,
     PRIMARY KEY (id),
-    FOREIGN KEY (profile_id) REFERENCES profile_details,
-    FOREIGN KEY (post_id) REFERENCES user_posts
+    FOREIGN KEY (profile_id) REFERENCES profile_details ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES user_posts ON DELETE CASCADE
+);
+
+CREATE TABLE reported_posts (
+    id SMALLINT GENERATED ALWAYS AS IDENTITY,
+    profile_id SMALLINT,
+    post_id SMALLINT,
+    report_desc VARCHAR(255) NOT NULL,
+    reported_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (profile_id) REFERENCES profile_details ON DELETE CASCADE ,
+    FOREIGN KEY (post_id) REFERENCES user_posts ON DELETE CASCADE
 );
