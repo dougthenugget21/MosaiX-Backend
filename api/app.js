@@ -12,12 +12,14 @@ const api = express();
 api.use(cors());
 api.use(express.json());
 
+
+api.get('/', (req, res) => {
+   res.send('Welcome to MosaiX!');
+})
 api.use("/userData", userDetailsRouter);
 api.use("/profileData", profileDetailsRouter);
 api.use("/userProfile", userProfileRouter)
 api.use("/posts", postRouter)
-
-
 api.use("/comment",commentRouter)
 
 module.exports = api;
