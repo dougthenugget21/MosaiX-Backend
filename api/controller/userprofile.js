@@ -1,0 +1,137 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+const Userprofile = require('../model/Userprofile');
+
+// Get user details by User Id
+async function getUserDetailsbyID(req, res) {
+    try {
+        let user_id = req.params.id;
+        const userprofile = await Userprofile.getUserDetailsbyID(user_id);
+        res.status(200).json(userprofile);
+    }
+    catch(e) {
+        res.status(500).json({error: e.message})
+    }
+}
+
+// Get user details by Profile ID
+async function getUserDetailsbyProfileID(req, res) {
+try{
+        let profile_id = req.params.id; 
+        const userprofile = await Userprofile.getUserDetailsbyProfileID(profile_id);
+        res.status(200).json(userprofile);
+    }
+    catch(e) {
+        res.status(500).json({error: e.message})
+    }
+}
+
+// Check login authentication
+async function getUserDetailsbyEmail (req, res) {
+    try {
+        const data = req.body;
+        const userprofile = await Userprofile.getUserDetailsbyEmail(data.email);
+        if(!userprofile) {
+            throw new Error ("No user with that email available")
+        }
+        const match = await bcrypt.compare(data.password, userprofile.password);
+        
+        if(match) {
+            const payload = {username: userprofile.email}
+            const sendToken = (err, token) => {
+                if(err) {
+                    throw new Error ("Error in token generation")
+                }
+                res.status(200).json({
+                    success:true,
+                    token:token,
+                    email:userprofile.email,
+                    user_id: userprofile.user_id,
+                    profile_id: userprofile.profile_id,
+                    user_name: userprofile.user_name
+                });
+            }
+            jwt.sign(payload, process.env.SECRET_TOKEN, {expiresIn: 3600}, sendToken);
+        }
+        else {
+            throw new Error("User could not be authenticated")
+        }
+    }
+    catch(e) {
+        res.status(401).json({error: e.message});
+    }
+}
+
+async function createUserProfile(req, res) {
+    try {
+        const data = req.body;
+        //Generate a salt
+        const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
+        //Hash the password
+        data["password"] = await bcrypt.hash(data.password, salt);
+        const result = await Userprofile.createUserProfile(data);
+
+        const payload = {
+            email: result.email,
+            user_id: result.user_id,
+            profile_id: result.profile_id
+        };
+
+        jwt.sign(
+            payload,
+                process.env.SECRET_TOKEN, { expiresIn: 3600 },
+                (err, token) => {
+                if (err) {
+                    throw new Error("Error in token generation");
+                }
+
+                res.status(201).json({
+                    success:true,
+                    token:token,
+                    user: {
+                        user_id: result.user_id,
+                        email: result.email,
+                        user_name: result.user_name
+                    }
+                });
+            }
+        );
+
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+}
+
+async function updateUserProfile (req, res) {
+    try {
+        const user_id = req.params.id;
+        const data = req.body;
+        //Generate a salt
+        const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
+        //Hash the password
+        data["password"] = await bcrypt.hash(data.password, salt);
+
+        const userprofile = await Userprofile.getUserDetailsbyID(user_id);
+        const result = await userprofile.updateUserProfile(data);
+        res.status(200).json(result);
+    } 
+    catch (e) {
+        res.status(404).json({error: e.message})
+    }
+}
+
+async function deleteUser (req, res) {
+    try {
+        const user_id = req.params.id;
+        const userprofile = await Userprofile.getUserDetailsbyID(user_id);
+        const result = await userprofile.deleteUser();
+        res.status(204).json(result);
+    } catch (err) {
+        res.status(404).json({error: err.message})
+    }
+};
+
+
+module.exports = {getUserDetailsbyID, getUserDetailsbyProfileID, getUserDetailsbyEmail, createUserProfile, deleteUser, updateUserProfile}
