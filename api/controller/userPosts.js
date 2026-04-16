@@ -1,3 +1,4 @@
+const { parse } = require('dotenv')
 const Posts = require('../model/userPosts')
 
 async function allPosts(req,res){
@@ -6,6 +7,17 @@ async function allPosts(req,res){
         res.status(200).json(posts)
     }
     catch(err){
+        res.status(500).json({'error':err.message})
+    }
+}
+async function getNearbyPosts(req,res){
+    try{
+        long = parseFloat(req.query.long)
+        lat = parseFloat(req.query.lat)
+        dist = parseFloat(req.query.dist)
+        const posts = await Posts.getNearbyPosts(lat,long,dist)
+        res.status(200).json(posts)
+    } catch(err) {
         res.status(500).json({'error':err.message})
     }
 }
@@ -21,7 +33,6 @@ async function increaseLikes(req,res){
 
 async function getByPostId(req,res){
     try{
-        console.log(req.params.id);
         const posts = await Posts.getByPostId(req.params.id)
         res.status(200).json(posts)
     } catch (err) {
@@ -48,4 +59,5 @@ async function createPost(req,res){
     }
 }
 
-module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes}
+
+module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts}
