@@ -58,6 +58,15 @@ async function createPost(req,res){
         res.status(400).send({error: err.message})
     }
 }
+async function deletePost(req,res){
+    try{
+        const postToDelete = await Posts.getByPostId(req.params.id)
+        const result = await postToDelete.deletePost()
+        res.status(200).send({data: result})
+    } catch (err) {
+        res.status(400).json(err.message)
+    }
+}
 
 
-module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts}
+module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts,deletePost}

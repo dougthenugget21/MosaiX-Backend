@@ -138,8 +138,10 @@ class Posts {
     //deleting a post by it's id
 
     async deletePost(){
-        const response = await db.query("DELETE FROM user_posts")
+        const response = await db.query("DELETE FROM user_posts where id = $1 RETURNING *",[this.id])
+        return response.rows[0]
     }
+
     //editing the number of likes on a post when someone adds a like
     async increaseLikeCount(){
         const response = await db.query("UPDATE user_posts SET like_count = like_count + 1 WHERE id = $1 RETURNING *",[this.id])
@@ -151,29 +153,68 @@ class Posts {
     }
 
     //getting all posts from the table
-    static async getAllPosts(){
+/*     static async getAllPosts(){
         const response = await db.query("SELECT * FROM user_posts")
 
         if(response.rows.length ===0) {
             throw new Error("No posts available")
         }
         return response.rows.map(p => new Posts(p))
-    }
+    } */
 
 
 
     //Creating a new post
     static async createPost(post_data){
-        const {profile_id,photo_url,longitude,latitude,title,post_desc} = post_data
+        const {profile_id,photo_url,longitude,latitude,title,post_desc,tags} = post_data
+
         if(!profile_id){throw new Error ('profile id is missing')}
         if(!photo_url){throw new Error('photo url is is missing')}
-        
-        if(longitude === undefined||latitude === undefined){
-            throw new Error('longitude or latitude is missing')
+        if(!longitude||!latitude){throw new Error('location fields are missing')}
+        if(!title){throw new Error('title is missing')}
+        if(!post_desc){throw new Error('description of post is missing')}
+    
+
+        let client = await db.connect();
+
+        try{
+            await client.query("BEGIN");
+            const response = await db.query(
+                `INSERT INTO user_posts (profile_id,photo_url,longitude,latitude,post_title, post_desc) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;`, 
+                [profile_id,photo_url,longitude,latitude,title,post_desc]
+            )
+            const newPost = response.rows[0];
+            //console.log(newPost.id)
+            let tagArray = tags.split(",")   
+            console.log(tagArray)
+            for (let i = 0 ; i<tagArray.length; i++) {
+                let tag_id;
+                let resp_tag = await db.query(
+                    `SELECT * from tags where tag_name = $1;`, [tagArray[i]]
+                )
+                console.log(resp_tag.rows[0])
+                if (resp_tag.rows[0] == undefined) {
+                    let resp_createtag = await db.query(
+                        `INSERT INTO tags (tag_name) VALUES ($1) RETURNING *;`, [tagArray[i]]
+                    )
+                    tag_id = resp_createtag.rows[0].id;
+                } 
+                else {
+                    console.log(resp_tag.rows[0].id)
+                    tag_id = resp_tag.rows[0].id;
+                }
+                
+                let resp_add = await db.query(
+                    `INSERT INTO post_tags (post_id, hash_tags) VALUES ($1, $2) RETURNING *;`, [newPost.id, tag_id]
+                )
+
+            }
+
+            await client.query("COMMIT")
+            return newPost;
+        } catch(err){
+            throw new Error(err +'Unable to insert')
         }
-        const response = await db.query(
-            `INSERT INTO user_posts (profile_id,photo_url,longitude,latitude,title, post_desc,created_date) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;`, [profile_id,photo_url,longitude,latitude,title,post_desc]
-        )
         return new Posts(response.rows[0])
     }
 
