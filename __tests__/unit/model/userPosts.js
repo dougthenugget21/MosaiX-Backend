@@ -1,4 +1,3 @@
-const { post } = require('../../../api/app')
 const userPosts = require('../../../api/model/userPosts')
 const db = require('../../../db/connect')
 
