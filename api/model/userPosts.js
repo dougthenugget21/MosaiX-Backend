@@ -173,6 +173,7 @@ class Posts {
         if(longitude=== undefined||latitude == undefined){throw new Error('location fields are missing')}
         if(!post_title){throw new Error('title is missing')}
         if(!post_desc){throw new Error('description of post is missing')}
+        if(!tags){throw new Error('there needs to be at least one tag')} 
     
 
         let client = await db.connect();
@@ -207,7 +208,6 @@ class Posts {
                 )
 
             }
-
             await client.query("COMMIT")
             return newPost;
         } catch(err){

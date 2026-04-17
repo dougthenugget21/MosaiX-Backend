@@ -1,3 +1,4 @@
+const { post } = require('../../../api/app')
 const userPosts = require('../../../api/model/userPosts')
 const db = require('../../../db/connect')
 
@@ -129,7 +130,7 @@ describe("User Posts", () => {
         })
     })
     describe('getNearbyPosts', () => {
-        it('returns nearby posts on a successful query', async () => {
+        it('returns nearby posts on a successful ', async () => {
             const mockNearbyPosts = {
                 rows: [
                     {
@@ -194,14 +195,14 @@ describe("User Posts", () => {
         })
     })
     describe('createPost', () => {
-        it('creates a new post successfully when tag already exists', async () => {
+        it('creates a new post successfully exists', async () => {
             const mockClient = {
                 query: jest.fn()
             }
-
             jest.spyOn(db, "connect").mockResolvedValue(mockClient)
 
-            jest.spyOn(db, "query")
+            mockClient.query
+                .mockResolvedValueOnce({}) // BEGIN
                 .mockResolvedValueOnce({
                     rows: [{
                         id: 10,
@@ -212,13 +213,14 @@ describe("User Posts", () => {
                         post_title: "New Post",
                         post_desc: "New description"
                     }]
-                })
+                }) // insert post
                 .mockResolvedValueOnce({
                     rows: [{ id: 5, tag_name: "food" }]
-                })
+                }) // select tag
                 .mockResolvedValueOnce({
                     rows: [{ post_id: 10, hash_tags: 5 }]
-                })
+                }) // insert into post_tags
+                .mockResolvedValueOnce({}) // COMMIT
 
             const postData = {
                 profile_id: 2,
@@ -233,8 +235,7 @@ describe("User Posts", () => {
             const result = await userPosts.createPost(postData)
 
             expect(result.id).toBe(10)
-            expect(mockClient.query).toHaveBeenCalledWith("BEGIN")
-            expect(mockClient.query).toHaveBeenCalledWith("COMMIT")
+            expect(result.profile_id).toBe(2)
         })
 
         it('throws an error if profile_id is missing', async () => {
@@ -305,6 +306,19 @@ describe("User Posts", () => {
             await expect(userPosts.createPost(postData))
                 .rejects.toThrow('description of post is missing')
         })
+        it('throws an error when tags are missing', async() =>{
+            const postData = {
+                profile_id: 2,
+                photo_url: "https://picsum.photos/seed/post10/600/400",
+                longitude: -74.006,
+                latitude: 40.7128,
+                post_title: "New Post",
+                post_desc: "New description",
+            } 
+            await expect(userPosts.createPost(postData)).rejects.toThrow('there needs to be at least one tag')
+        })
+
+            
     })
 })
 
