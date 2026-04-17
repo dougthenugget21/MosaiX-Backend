@@ -8,7 +8,7 @@ class Posts {
         this.photo_url = data.photo_url
         this.longitude = data.longitude
         this.latitude = data.latitude  
-        this.title = data.title
+        this.post_title = data.post_title
         this.post_desc = data.post_desc
         this.like_count = data.like_count ?? 0
         this.created_date = data.created_date
@@ -29,10 +29,10 @@ class Posts {
                                         WHERE user_posts.id = $1
                                         GROUP BY user_posts.id
                                         `,[postId])
-        const post_data = response.rows[0]
         if(response.rows.length===0){
             throw new Error('This post cannot be found')
         }
+        const post_data = response.rows[0]
         //return an array of tags but the tags have to be retrieved from post_tags and then tags table 
         let tagArray = post_data.tags.split(",")       
         post_data.tags = tagArray
@@ -51,7 +51,7 @@ class Posts {
             `,[post_data.profile_id])
         post_data.profilephoto_url = profileResponse.rows[0].profilephoto_url
         post_data.user_name = profileResponse.rows[0].user_name
-        post_data.reputation_badge = profileResponse.rows[0].user_name
+        post_data.reputation_badge = profileResponse.rows[0].reputation_badge
         return new Posts(post_data)
     }
 
@@ -142,7 +142,7 @@ class Posts {
         return response.rows[0]
     }
 
-    //editing the number of likes on a post when someone adds a like
+/*     //editing the number of likes on a post when someone adds a like
     async increaseLikeCount(){
         const response = await db.query("UPDATE user_posts SET like_count = like_count + 1 WHERE id = $1 RETURNING *",[this.id])
         if(response.rows.length === 0){
@@ -150,7 +150,7 @@ class Posts {
         }
         const post = new Posts(response.rows[0])
         return post 
-    }
+    } */
 
     //getting all posts from the table
 /*     static async getAllPosts(){
@@ -166,12 +166,12 @@ class Posts {
 
     //Creating a new post
     static async createPost(post_data){
-        const {profile_id,photo_url,longitude,latitude,title,post_desc,tags} = post_data
+        const {profile_id,photo_url,longitude,latitude,post_title,post_desc,tags} = post_data
 
         if(!profile_id){throw new Error ('profile id is missing')}
         if(!photo_url){throw new Error('photo url is is missing')}
-        if(!longitude||!latitude){throw new Error('location fields are missing')}
-        if(!title){throw new Error('title is missing')}
+        if(longitude=== undefined||latitude == undefined){throw new Error('location fields are missing')}
+        if(!post_title){throw new Error('title is missing')}
         if(!post_desc){throw new Error('description of post is missing')}
     
 
@@ -179,22 +179,20 @@ class Posts {
 
         try{
             await client.query("BEGIN");
-            const response = await db.query(
+            const response = await client.query(
                 `INSERT INTO user_posts (profile_id,photo_url,longitude,latitude,post_title, post_desc) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;`, 
-                [profile_id,photo_url,longitude,latitude,title,post_desc]
+                [profile_id,photo_url,longitude,latitude,post_title,post_desc]
             )
             const newPost = response.rows[0];
-            //console.log(newPost.id)
             let tagArray = tags.split(",")   
-            console.log(tagArray)
             for (let i = 0 ; i<tagArray.length; i++) {
                 let tag_id;
-                let resp_tag = await db.query(
+                let resp_tag = await client.query(
                     `SELECT * from tags where tag_name = $1;`, [tagArray[i]]
                 )
                 console.log(resp_tag.rows[0])
                 if (resp_tag.rows[0] == undefined) {
-                    let resp_createtag = await db.query(
+                    let resp_createtag = await client.query(
                         `INSERT INTO tags (tag_name) VALUES ($1) RETURNING *;`, [tagArray[i]]
                     )
                     tag_id = resp_createtag.rows[0].id;
@@ -204,7 +202,7 @@ class Posts {
                     tag_id = resp_tag.rows[0].id;
                 }
                 
-                let resp_add = await db.query(
+                let resp_add = await client.query(
                     `INSERT INTO post_tags (post_id, hash_tags) VALUES ($1, $2) RETURNING *;`, [newPost.id, tag_id]
                 )
 
@@ -214,8 +212,7 @@ class Posts {
             return newPost;
         } catch(err){
             throw new Error(err +'Unable to insert')
-        }
-        return new Posts(response.rows[0])
+        } 
     }
 
 }
