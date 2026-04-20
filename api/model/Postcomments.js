@@ -9,15 +9,24 @@ class Postcomments {
         this.user_name = data.user_name;
         this.created_date = data.created_date;
         this.profilephoto_url = data.profilephoto_url;
+        this.reputation_badge = data.reputation_badge
     }
 
     // Get all comments for Post
     static async getCommentsbyPostID(postid) {
-        const response = await db.query("SELECT c.*, p.user_name, p.profilephoto_url from post_comments c JOIN profile_details p ON c.by_profile_id = p.profile_id where post_id = $1;", [postid]);
+        const response = await db.query(`
+            SELECT c.*, p.user_name, p.profilephoto_url,r.reputation_badge
+            from post_comments c 
+            JOIN profile_details p 
+            ON c.by_profile_id = p.profile_id 
+            JOIN reputation_level r
+            ON p.reputation_id = r.id
+            where post_id =$1
+            `,[postid]
+        )
         if (response.rows.length == 0) {
             throw new Error("No comments for this post");
         }
-
         //return new Postcomments(response.rows);
         return response.rows.map(p => new Postcomments(p))
     }
