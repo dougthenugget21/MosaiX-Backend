@@ -16,6 +16,8 @@ class Posts {
         this.profilephoto_url = data.profilephoto_url
         this.reputation_badge = data.reputation_badge
         this.user_name = data.user_name
+        this.is_liked = data.is_liked
+        this.is_saved = data.is_saved
     }
 
     //getting a specific post
@@ -92,14 +94,28 @@ class Posts {
     }
 
     // Get posts based on latitude and longitude and radius inputted 
-    static async getNearbyPosts(lat,long,dist){
+    static async getNearbyPosts(lat,long,dist,profileId){
+        console.log(profileId);
         const response = await db.query(`
         SELECT posts.id,posts.profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date, STRING_AGG(tag_name,',') as tags,profilephoto_url,reputation_badge,
         CASE 
         WHEN profile_details.is_private = true
         THEN 'Anonymous'
         ELSE user_name
-        END as user_name
+        END as user_name,
+        EXISTS (
+            SELECT id
+            FROM liked_posts as lp
+            WHERE lp.post_id = posts.id
+            AND lp.profile_id = $4
+            ) AS is_liked,
+        EXISTS (
+            SELECT id
+            FROM saved_posts as sp
+            WHERE sp.post_id = posts.id
+            AND sp.profile_id = $4
+            ) AS is_saved
+
         FROM (
             SELECT *,
                 (
@@ -115,6 +131,7 @@ class Posts {
                 ) AS distance_km
             FROM user_posts
         ) AS posts
+
         JOIN post_tags
         ON post_tags.post_id = posts.id
         JOIN tags
@@ -126,13 +143,14 @@ class Posts {
         WHERE distance_km < $3
         GROUP BY posts.id,posts.profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date, distance_km,profile_details.profilephoto_url,reputation_level.reputation_badge,profile_details.is_private,profile_details.user_name
         ORDER BY distance_km ASC`,
-        [lat, long, dist]
+        [lat, long, dist,profileId]
         )  
         let post_data = response.rows
         post_data.forEach((record) => {
             let tagArray = record.tags.split(",")
             record.tags = tagArray
         })
+        console.log(post_data);
         return post_data.map(p => new Posts(p))
     }
     //deleting a post by it's id
@@ -161,8 +179,6 @@ class Posts {
         }
         return response.rows.map(p => new Posts(p))
     } */
-
-
 
     //Creating a new post
     static async createPost(post_data){

@@ -15,7 +15,8 @@ async function getNearbyPosts(req,res){
         long = parseFloat(req.query.long)
         lat = parseFloat(req.query.lat)
         dist = parseFloat(req.query.dist)
-        const posts = await Posts.getNearbyPosts(lat,long,dist)
+        profile_id = parseInt(req.query.profileId)
+        const posts = await Posts.getNearbyPosts(lat,long,dist,profile_id)
         res.status(200).json(posts)
     } catch(err) {
         res.status(500).json({'error':err.message})
