@@ -9,6 +9,7 @@ postRouter.get('/nearby',postController.getNearbyPosts)
 postRouter.patch('/addLike',postController.increaseLikes)
 postRouter.patch('/unLike',postController.decreaseLikes)
 postRouter.post('/new', postController.createPost)
+postRouter.post('/report',postController.reportPost)
 postRouter.delete('/delete/:id',postController.deletePost)
 
 
