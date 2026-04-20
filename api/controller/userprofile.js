@@ -124,6 +124,35 @@ async function updateUserProfile (req, res) {
     }
 }
 
+async function savePosts(req,res){
+    try{
+        let profileId = parseInt(req.query.profileId)
+        let savingPostId = parseInt(req.query.postId)
+        const userProfile = await Userprofile.getUserDetailsbyProfileID(profileId)
+        const response = await userProfile.savePost(savingPostId)
+        return res.status(200).json(response)
+    } catch(err) {
+        res.status(404).json({error: err.message})
+    }
+}
+
+async function unSavePosts(req,res){
+    try{
+        console.log("params",req.params);
+        console.log("query",req.query);
+        console.log("body",req.body);
+        let profileId = parseInt(req.query.profileId)
+        let unSavingPostId = parseInt(req.query.postId)
+        console.log(`profile id is ${profileId} and unsavingpostid is ${unSavingPostId}`);
+        const userProfile = await Userprofile.getUserDetailsbyProfileID(profileId)
+        console.log(userProfile);
+        const response = await userProfile.unSavePost(unSavingPostId)
+        return res.status(200).json(response)
+    } catch(err) {
+        res.status(404).json({error: err.message})
+    }
+}
+
 async function deleteUser (req, res) {
     try {
         const user_id = req.params.id;
@@ -136,4 +165,4 @@ async function deleteUser (req, res) {
 };
 
 
-module.exports = {getUserDetailsbyID, getUserDetailsbyProfileID, getUserDetailsbyEmail, createUserProfile, deleteUser, updateUserProfile}
+module.exports = {getUserDetailsbyID, getUserDetailsbyProfileID, getUserDetailsbyEmail, createUserProfile, deleteUser, updateUserProfile,savePosts,unSavePosts}

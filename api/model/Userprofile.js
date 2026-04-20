@@ -1,4 +1,5 @@
 const db = require('../../db/connect');
+const { response } = require('../app');
 
 class Userprofile {
     constructor(data) {
@@ -171,6 +172,31 @@ class Userprofile {
         finally {
             client.release();
         }
+    }
+
+    async getsavedPosts() {
+        try{
+            await db.query("SELECT INTO saved_posts () ")
+        } catch(err){
+
+        }
+    }
+
+    async savePost(post_id){
+        try{
+            let response = await db.query("INSERT INTO saved_posts (profile_id,post_id) VALUES ($1,$2) RETURNING *",[this.profile_id,post_id])
+            return response.rows[0]
+        } catch(err){
+            throw err;
+        }
+    }
+    async unSavePost(post_id) {
+        try{
+            let response = await db.query("DELETE FROM saved_posts WHERE profile_id = $1 AND post_id = $2 RETURNING *",[this.profile_id,post_id])
+            return response.rows[0]
+       } catch (err) {
+            throw err;            
+       }
     }
 }
 

@@ -45,6 +45,8 @@ async function decreaseLikes(req,res){
     }
 }
 
+
+
 async function getByPostId(req,res){
     try{
         const posts = await Posts.getByPostId(req.params.id)
