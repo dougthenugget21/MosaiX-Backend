@@ -108,11 +108,13 @@ async function updateUserProfile (req, res) {
     try {
         const user_id = req.params.id;
         const data = req.body;
-        //Generate a salt
-        const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
-        //Hash the password
-        data["password"] = await bcrypt.hash(data.password, salt);
-
+        if (data.password !== undefined) {
+             //Generate a salt
+            const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
+            //Hash the password
+            data["password"] = await bcrypt.hash(data.password, salt);
+        }
+       
         const userprofile = await Userprofile.getUserDetailsbyID(user_id);
         const result = await userprofile.updateUserProfile(data);
         res.status(200).json(result);
