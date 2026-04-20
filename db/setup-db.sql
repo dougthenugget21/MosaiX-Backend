@@ -53,7 +53,7 @@ CREATE TABLE profile_details (
     user_name VARCHAR(50) NOT NULL,
     is_private BOOLEAN NOT NULL DEFAULT true,
     bio VARCHAR(255),
-    profilephoto_url VARCHAR(255) NOT NULL,
+    profilephoto_url VARCHAR(255),
     reputation_id SMALLINT,
     total_likes INT DEFAULT 0,
     PRIMARY KEY (profile_id),
