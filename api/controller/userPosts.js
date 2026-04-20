@@ -24,8 +24,21 @@ async function getNearbyPosts(req,res){
 }
 async function increaseLikes(req,res){
     try{
-        const likedPost = await Posts.getByPostId(req.params.id)
-        const updatedPost = await likedPost.increaseLikeCount()
+        likePostId = req.query.postId
+        likingProfileId = req.query.profileId
+        const likedPost = await Posts.getByPostId(likePostId)
+        const updatedPost = await likedPost.increaseLikeCount(likingProfileId)
+        res.status(200).json(updatedPost)
+    } catch(err){
+        res.status(500).json({'error':err.message})
+    }
+}
+async function decreaseLikes(req,res){
+    try{
+        unlikePostId = req.query.postId
+        unlikeProfileId = req.query.profileId
+        const unlikedPost = await Posts.getByPostId(unlikePostId)
+        const updatedPost = await unlikedPost.decreaseLikeCount(unlikeProfileId)
         res.status(200).json(updatedPost)
     } catch(err){
         res.status(500).json({'error':err.message})
@@ -70,4 +83,4 @@ async function deletePost(req,res){
 }
 
 
-module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts,deletePost}
+module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts,deletePost,decreaseLikes}
