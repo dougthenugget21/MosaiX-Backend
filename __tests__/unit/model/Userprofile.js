@@ -95,6 +95,7 @@ describe("Userprofile", () => {
     describe("createUserProfile", () => {
 
         it("creates user and profile successfully", async () => {
+
             const mockClient = {
                 query: jest.fn(),
                 release: jest.fn()
@@ -109,15 +110,21 @@ describe("Userprofile", () => {
             };
 
             mockClient.query
-                .mockResolvedValueOnce()
+                .mockResolvedValueOnce() // BEGIN
                 .mockResolvedValueOnce({ rows: [{ user_id: 1, email: userData.email }] })
                 .mockResolvedValueOnce({ rows: [{ profile_id: 10, user_name: "Rumana" }] })
-                .mockResolvedValueOnce();
+                .mockResolvedValueOnce(); // COMMIT
 
             const result = await Userprofile.createUserProfile(userData);
 
             expect(result).toBeInstanceOf(Userprofile);
+
+            // UPDATED ASSERTIONS
+            expect(result.user_id).toBe(1);
             expect(result.email).toBe(userData.email);
+            expect(result.profile_id).toBe(10);
+            expect(result.user_name).toBe("Rumana");
+
             expect(mockClient.query).toHaveBeenCalledWith("BEGIN");
             expect(mockClient.query).toHaveBeenCalledWith("COMMIT");
             expect(mockClient.release).toHaveBeenCalled();

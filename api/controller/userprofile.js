@@ -93,7 +93,8 @@ async function createUserProfile(req, res) {
                     user: {
                         user_id: result.user_id,
                         email: result.email,
-                        user_name: result.user_name
+                        user_name: result.user_name,
+                        profile_id: result.profile_id,
                     }
                 });
             }

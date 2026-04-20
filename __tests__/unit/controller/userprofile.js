@@ -167,8 +167,7 @@ describe("Userprofile Controller", () => {
                 email: "abc@gmail.com",
                 user_id: 1,
                 profile_id: 10,
-                user_name: "Rumana",
-                bio:"Hi, my name is Rumana and I am a trainee at LA Fosse!"
+                user_name: "Rumana"
             };
 
             bcrypt.genSalt.mockResolvedValue("salt");
@@ -188,13 +187,15 @@ describe("Userprofile Controller", () => {
             expect(Userprofile.createUserProfile).toHaveBeenCalled();
 
             expect(res.status).toHaveBeenCalledWith(201);
+
             expect(res.json).toHaveBeenCalledWith({
                 success: true,
                 token: "mockToken",
                 user: {
                     user_id: 1,
                     email: "abc@gmail.com",
-                    user_name: "Rumana"
+                    user_name: "Rumana",
+                    profile_id: 10
                 }
             });
         });
