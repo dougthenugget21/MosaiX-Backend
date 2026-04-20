@@ -84,5 +84,18 @@ async function deletePost(req,res){
     }
 }
 
+async function reportPost(req,res){
+    try{
+        reportPostId = req.body.postId
+        reportingProfileId = req.body.profileId
+        report_desc = req.body.report_desc
+        const postToReport = await Posts.getByPostId(reportPostId)
+        const result = await postToReport.reportPost(reportingProfileId,report_desc)
+        res.status(200).send({data: result})
+    } catch (err){
+        throw err
+    }
+}
 
-module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts,deletePost,decreaseLikes}
+
+module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts,deletePost,decreaseLikes,reportPost}
