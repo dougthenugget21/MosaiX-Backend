@@ -66,11 +66,6 @@ api.get('/', (req, res) => {
       endpoints: [
         {
           method: 'GET',
-          url: '/posts/all',
-          description: 'Get all posts'
-        },
-        {
-          method: 'GET',
           url: '/posts/id/:id',
           description: 'Get post by post ID'
         },
@@ -88,11 +83,6 @@ api.get('/', (req, res) => {
           method: 'POST',
           url: '/posts/new',
           description: 'Create a new post'
-        },
-        {
-          method: 'PATCH',
-          url: '/posts/:id',
-          description: 'Increase like count of a post'
         },
         {
           method: 'DELETE',

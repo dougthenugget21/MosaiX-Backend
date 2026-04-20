@@ -8,6 +8,9 @@ userprofileRouter.get("/profileid/:id", userprofileController.getUserDetailsbyPr
 userprofileRouter.post("/login", userprofileController.getUserDetailsbyEmail);
 userprofileRouter.post("/create", userprofileController.createUserProfile);
 userprofileRouter.patch("/:id", userprofileController.updateUserProfile);
+userprofileRouter.delete("/unsave",userprofileController.unSavePosts)
 userprofileRouter.delete("/:id", userprofileController.deleteUser);
+userprofileRouter.post("/save",userprofileController.savePosts)
+
 
 module.exports = userprofileRouter;

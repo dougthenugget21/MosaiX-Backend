@@ -162,21 +162,47 @@ class Posts {
 
     //editing the number of likes on a post when someone adds a like
     async increaseLikeCount(likingProfileId){
-        //update like count on main user posts table
-        const response = await db.query("UPDATE user_posts SET like_count = like_count + 1 WHERE id = $1 RETURNING *",[this.id])
-        // insert into liked posts table 
-        const likeResponse = await db.query("INSERT INTO liked_posts (profile_id, post_id) VALUES ($1,$2)",[likingProfileId,this.id])
-        const post = new Posts(response.rows[0])
-        return post 
+        const client = await db.connect();
+        try{
+            await client.query("BEGIN");
+            //update like count on main user posts table
+            const response = await client.query("UPDATE user_posts SET like_count = like_count + 1 WHERE id = $1 RETURNING *",[this.id])
+            // insert into liked posts table 
+            const likeResponse = await client.query("INSERT INTO liked_posts (profile_id, post_id) VALUES ($1,$2)",[likingProfileId,this.id])
+            //increase total likes of the profile who posted the original post
+            const totalLike = await client.query("UPDATE profile_details SET total_likes = total_likes + 1 WHERE profile_id = $1",[this.profile_id] )
+            const post = new Posts(response.rows[0])
+
+            await client.query("COMMIT")
+            return post
+        }catch(err){
+            await client.query("ROLLBACK")
+            throw err
+        }finally {
+            client.release();
+        }
     }
     async decreaseLikeCount(unlikeProfileId){
-        //update like count on main user posts table
-        const response = await db.query("UPDATE user_posts SET like_count = like_count - 1 WHERE id = $1 RETURNING *",[this.id])
-        // insert into liked posts table 
-        const likeResponse = await db.query("DELETE FROM liked_posts WHERE profile_id = $1 AND post_id = $2",[unlikeProfileId,this.id])
-        const post = new Posts(response.rows[0])
-        return post 
+        const client = await db.connect()
+        try{
+            await client.query("BEGIN");
+            //update like count on main user posts table
+            const response = await client.query("UPDATE user_posts SET like_count = like_count - 1 WHERE id = $1 RETURNING *",[this.id])
+            // insert into liked posts table 
+            const likeResponse = await client.query("DELETE FROM liked_posts WHERE profile_id = $1 AND post_id = $2",[unlikeProfileId,this.id])
+            const totalLike = await client.query("UPDATE profile_details SET total_likes = total_likes - 1 WHERE profile_id = $1",[this.profile_id] )
+            await client.query("COMMIT")
+            const post = new Posts(response.rows[0])
+            return post 
+        } catch(err){
+            await client.query("ROLLBACK")
+            throw err
+        }finally {
+            client.release();
+        }
     }
+
+    
     
     
 
