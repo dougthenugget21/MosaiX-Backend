@@ -160,15 +160,27 @@ class Posts {
         return response.rows[0]
     }
 
-/*     //editing the number of likes on a post when someone adds a like
-    async increaseLikeCount(){
+    //editing the number of likes on a post when someone adds a like
+    async increaseLikeCount(likingProfileId){
+        //update like count on main user posts table
         const response = await db.query("UPDATE user_posts SET like_count = like_count + 1 WHERE id = $1 RETURNING *",[this.id])
-        if(response.rows.length === 0){
-            throw new Error('no posts available by this id')
-        }
+        // insert into liked posts table 
+        const likeResponse = await db.query("INSERT INTO liked_posts (profile_id, post_id) VALUES ($1,$2)",[likingProfileId,this.id])
         const post = new Posts(response.rows[0])
         return post 
-    } */
+    }
+    async decreaseLikeCount(unlikeProfileId){
+        //update like count on main user posts table
+        const response = await db.query("UPDATE user_posts SET like_count = like_count - 1 WHERE id = $1 RETURNING *",[this.id])
+        // insert into liked posts table 
+        const likeResponse = await db.query("DELETE FROM liked_posts WHERE profile_id = $1 AND post_id = $2",[unlikeProfileId,this.id])
+        const post = new Posts(response.rows[0])
+        return post 
+    }
+    
+    
+
+
 
     //getting all posts from the table
 /*     static async getAllPosts(){
