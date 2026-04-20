@@ -93,16 +93,27 @@ class Userprofile {
 
         try {
             await client.query("BEGIN");
-
             // Update user details
             if (data.email || data.password) {
-                await client.query("UPDATE user_details SET email = COALESCE($1, email), password = COALESCE($2, password) WHERE user_id = $3;",
+                await client.query(`
+                    UPDATE user_details 
+                    SET email = COALESCE($1, email), 
+                    password = COALESCE($2, password) 
+                    WHERE user_id = $3;`,
                     [data.email, data.password, this.user_id]
                 );
             }
 
             // Update profile table
-            const response = await client.query("UPDATE profile_details SET user_name = COALESCE($1, user_name), is_private = COALESCE($2, is_private), bio = COALESCE($3, bio), reputation_id = COALESCE($4, reputation_id), total_likes = COALESCE($5, total_likes), profilephoto_url = COALESCE($6, profilephoto_url) WHERE user_id = $7 RETURNING *;",
+            const response = await client.query(`
+                UPDATE profile_details 
+                    SET user_name = COALESCE($1, user_name), 
+                    is_private = COALESCE($2, is_private), 
+                    bio = COALESCE($3, bio), 
+                    reputation_id = COALESCE($4, reputation_id),
+                    total_likes = COALESCE($5, total_likes), 
+                    profilephoto_url = COALESCE($6, profilephoto_url) 
+                    WHERE user_id = $7 RETURNING *;`,
                 [
                     data.user_name,
                     data.is_private,
@@ -118,7 +129,6 @@ class Userprofile {
 
             return new Userprofile({
                 ...this,
-                ...response.rows[0],
                 ...data
             });
 
