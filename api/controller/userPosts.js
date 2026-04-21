@@ -12,10 +12,10 @@ async function allPosts(req,res){
 }
 async function getNearbyPosts(req,res){
     try{
-        long = parseFloat(req.query.long)
-        lat = parseFloat(req.query.lat)
-        dist = parseFloat(req.query.dist)
-        profile_id = parseInt(req.query.profileId)
+        const long = parseFloat(req.query.long)
+        const lat = parseFloat(req.query.lat)
+        const dist = parseFloat(req.query.dist)
+        const profile_id = parseInt(req.query.profileId)
         const posts = await Posts.getNearbyPosts(lat,long,dist,profile_id)
         res.status(200).json(posts)
     } catch(err) {
@@ -24,8 +24,8 @@ async function getNearbyPosts(req,res){
 }
 async function increaseLikes(req,res){
     try{
-        likePostId = req.query.postId
-        likingProfileId = req.query.profileId
+        const likePostId = req.query.postId
+        const likingProfileId = req.query.profileId
         const likedPost = await Posts.getByPostId(likePostId)
         const updatedPost = await likedPost.increaseLikeCount(likingProfileId)
         res.status(200).json(updatedPost)
@@ -35,8 +35,8 @@ async function increaseLikes(req,res){
 }
 async function decreaseLikes(req,res){
     try{
-        unlikePostId = req.query.postId
-        unlikeProfileId = req.query.profileId
+        const unlikePostId = req.query.postId
+        const unlikeProfileId = req.query.profileId
         const unlikedPost = await Posts.getByPostId(unlikePostId)
         const updatedPost = await unlikedPost.decreaseLikeCount(unlikeProfileId)
         res.status(200).json(updatedPost)

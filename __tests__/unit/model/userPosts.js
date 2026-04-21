@@ -316,9 +316,192 @@ describe("User Posts", () => {
             } 
             await expect(userPosts.createPost(postData)).rejects.toThrow('there needs to be at least one tag')
         })
-
-            
     })
+    describe('increaseLikeCount', () => {
+    it('increments like count, inserts liked post, updates total likes and commits', async () => {
+        const mockClient = {
+            query: jest.fn(),
+            release: jest.fn()
+        }
+
+        jest.spyOn(db, "connect").mockResolvedValue(mockClient)
+
+        const post = new userPosts({
+            id: 1,
+            profile_id: 2,
+            like_count: 4
+        })
+
+        mockClient.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 1,
+                    profile_id: 2,
+                    like_count: 5
+                }]
+            }) // UPDATE user_posts
+            .mockResolvedValueOnce({ rows: [] }) // INSERT liked_posts
+            .mockResolvedValueOnce({ rows: [] }) // UPDATE profile_details
+            .mockResolvedValueOnce({}) // COMMIT
+
+        const result = await post.increaseLikeCount(99)
+
+        expect(result).toBeInstanceOf(userPosts)
+        expect(result.like_count).toBe(5)
+        expect(mockClient.query).toHaveBeenNthCalledWith(1, "BEGIN")
+        expect(mockClient.query).toHaveBeenNthCalledWith(
+            2,
+            "UPDATE user_posts SET like_count = like_count + 1 WHERE id = $1 RETURNING *",
+            [1]
+        )
+        expect(mockClient.query).toHaveBeenNthCalledWith(
+            3,
+            "INSERT INTO liked_posts (profile_id, post_id) VALUES ($1,$2)",
+            [99, 1]
+        )
+        expect(mockClient.query).toHaveBeenNthCalledWith(
+            4,
+            "UPDATE profile_details SET total_likes = total_likes + 1 WHERE profile_id = $1",
+            [2]
+        )
+        expect(mockClient.query).toHaveBeenNthCalledWith(5, "COMMIT")
+        expect(mockClient.release).toHaveBeenCalled()
+    })
+
+    it('rolls back and throws if increaseLikeCount fails', async () => {
+        const mockClient = {
+            query: jest.fn(),
+            release: jest.fn()
+        }
+
+        jest.spyOn(db, "connect").mockResolvedValue(mockClient)
+
+        const post = new userPosts({
+            id: 1,
+            profile_id: 2
+        })
+
+        mockClient.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockRejectedValueOnce(new Error("db failure")) // UPDATE fails
+            .mockResolvedValueOnce({}) // ROLLBACK
+
+        await expect(post.increaseLikeCount(99)).rejects.toThrow("db failure")
+        expect(mockClient.query).toHaveBeenCalledWith("ROLLBACK")
+        expect(mockClient.release).toHaveBeenCalled()
+    })
+})
+
+describe('decreaseLikeCount', () => {
+    it('decrements like count, removes liked post, updates total likes and commits', async () => {
+        const mockClient = {
+            query: jest.fn(),
+            release: jest.fn()
+        }
+
+        jest.spyOn(db, "connect").mockResolvedValue(mockClient)
+
+        const post = new userPosts({
+            id: 1,
+            profile_id: 2,
+            like_count: 5
+        })
+
+        mockClient.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 1,
+                    profile_id: 2,
+                    like_count: 4
+                }]
+            }) // UPDATE user_posts
+            .mockResolvedValueOnce({ rows: [] }) // DELETE liked_posts
+            .mockResolvedValueOnce({ rows: [] }) // UPDATE profile_details
+            .mockResolvedValueOnce({}) // COMMIT
+
+        const result = await post.decreaseLikeCount(99)
+
+        expect(result).toBeInstanceOf(userPosts)
+        expect(result.like_count).toBe(4)
+        expect(mockClient.query).toHaveBeenNthCalledWith(1, "BEGIN")
+        expect(mockClient.query).toHaveBeenNthCalledWith(
+            2,
+            "UPDATE user_posts SET like_count = like_count - 1 WHERE id = $1 RETURNING *",
+            [1]
+        )
+        expect(mockClient.query).toHaveBeenNthCalledWith(
+            3,
+            "DELETE FROM liked_posts WHERE profile_id = $1 AND post_id = $2",
+            [99, 1]
+        )
+        expect(mockClient.query).toHaveBeenNthCalledWith(
+            4,
+            "UPDATE profile_details SET total_likes = total_likes - 1 WHERE profile_id = $1",
+            [2]
+        )
+        expect(mockClient.query).toHaveBeenNthCalledWith(5, "COMMIT")
+        expect(mockClient.release).toHaveBeenCalled()
+    })
+
+    it('rolls back and throws if decreaseLikeCount fails', async () => {
+        const mockClient = {
+            query: jest.fn(),
+            release: jest.fn()
+        }
+
+        jest.spyOn(db, "connect").mockResolvedValue(mockClient)
+
+        const post = new userPosts({
+            id: 1,
+            profile_id: 2
+        })
+
+        mockClient.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockRejectedValueOnce(new Error("db failure")) // UPDATE fails
+            .mockResolvedValueOnce({}) // ROLLBACK
+
+        await expect(post.decreaseLikeCount(99)).rejects.toThrow("db failure")
+        expect(mockClient.query).toHaveBeenCalledWith("ROLLBACK")
+        expect(mockClient.release).toHaveBeenCalled()
+    })
+})
+
+describe('reportPost', () => {
+    it('reports a post successfully', async () => {
+        const post = new userPosts({ id: 5 })
+
+        const mockReportedPost = {
+            rows: [{
+                id: 1,
+                profile_id: 9,
+                post_id: 5,
+                report_desc: "Spam"
+            }]
+        }
+
+        jest.spyOn(db, "query").mockResolvedValueOnce(mockReportedPost)
+
+        const result = await post.reportPost(9, "Spam")
+
+        expect(result).toEqual(mockReportedPost.rows[0])
+        expect(db.query).toHaveBeenCalledWith(
+            "INSERT INTO reported_posts (profile_id,post_id,report_desc) VALUES ($1,$2,$3) RETURNING *",
+            [9, 5, "Spam"]
+        )
+    })
+
+    it('throws an error if reporting fails', async () => {
+        const post = new userPosts({ id: 5 })
+
+        jest.spyOn(db, "query").mockRejectedValueOnce(new Error("db failure"))
+
+        await expect(post.reportPost(9, "Spam")).rejects.toThrow("db failure")
+    })
+    
+})
 })
 
 
