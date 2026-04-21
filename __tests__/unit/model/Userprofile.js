@@ -90,6 +90,14 @@ describe("Userprofile", () => {
                 Userprofile.getUserDetailsbyEmail("wrong@gmail.com")
             ).rejects.toThrow("Cannot find user details with email.");
         });
+
+        it("throws error when no rows returned", async () => {
+            jest.spyOn(db, "query").mockResolvedValueOnce({ rows: [] });
+
+            await expect(
+                Userprofile.getUserDetailsbyEmail("nope@test.com")
+            ).rejects.toThrow("Cannot find user details with email.");
+        });
     });
 
     describe("createUserProfile", () => {
@@ -144,7 +152,10 @@ describe("Userprofile", () => {
 
             await expect(
                 Userprofile.createUserProfile({ email: "abc", password: "123" })
-            ).rejects.toThrow("DB error");
+            ).rejects.toMatchObject({
+                status: 500,
+                message: "Error creating user profile"
+            });
 
             expect(mockClient.query).toHaveBeenCalledWith("ROLLBACK");
             expect(mockClient.release).toHaveBeenCalled();

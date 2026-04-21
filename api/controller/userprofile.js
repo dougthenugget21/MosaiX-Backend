@@ -34,33 +34,41 @@ async function getUserDetailsbyEmail (req, res) {
         const data = req.body;
         const userprofile = await Userprofile.getUserDetailsbyEmail(data.email);
         if(!userprofile) {
-            throw new Error ("No user with that email available")
+            return res.status(404).json({
+                success: false,
+                message: "No account with this email. Please sign up.",
+            });
         }
         const match = await bcrypt.compare(data.password, userprofile.password);
         
-        if(match) {
-            const payload = {username: userprofile.email}
-            const sendToken = (err, token) => {
-                if(err) {
-                    throw new Error ("Error in token generation")
-                }
-                res.status(200).json({
-                    success:true,
-                    token:token,
-                    email:userprofile.email,
-                    user_id: userprofile.user_id,
-                    profile_id: userprofile.profile_id,
-                    user_name: userprofile.user_name
-                });
+        if (!match) {
+            return res.status(401).json({
+                success: false,
+                message: "Incorrect password. Please try again.",
+            });
+        }
+
+        const payload = {username: userprofile.email}
+        const sendToken = (err, token) => {
+            if(err) {
+                throw new Error ("Error in token generation")
             }
-            jwt.sign(payload, process.env.SECRET_TOKEN, {expiresIn: 3600}, sendToken);
+            res.status(200).json({
+                success:true,
+                token:token,
+                email:userprofile.email,
+                user_id: userprofile.user_id,
+                profile_id: userprofile.profile_id,
+                user_name: userprofile.user_name
+            });
         }
-        else {
-            throw new Error("User could not be authenticated")
-        }
+        jwt.sign(payload, process.env.SECRET_TOKEN, {expiresIn: 3600}, sendToken);
     }
     catch(e) {
-        res.status(401).json({error: e.message});
+        return res.status(500).json({
+            success: false,
+            message: e.message || "Something went wrong",
+        });    
     }
 }
 
@@ -90,6 +98,7 @@ async function createUserProfile(req, res) {
                 res.status(201).json({
                     success:true,
                     token:token,
+                    message:"Account created successfully!",
                     user: {
                         user_id: result.user_id,
                         email: result.email,
@@ -101,7 +110,9 @@ async function createUserProfile(req, res) {
         );
 
     } catch (e) {
-        res.status(400).json({ error: e.message });
+        res.status(e.status || 500).json({ 
+            success:false,
+            message: e.message || "Something went wrong" });
     }
 }
 

@@ -116,9 +116,10 @@ describe("Userprofile Controller", () => {
 
             await userprofileController.getUserDetailsbyEmail(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.status).toHaveBeenCalledWith(404);
             expect(res.json).toHaveBeenCalledWith({
-                error: "No user with that email available"
+                success: false,
+                message: "No account with this email. Please sign up."
             });
         });
 
@@ -135,7 +136,8 @@ describe("Userprofile Controller", () => {
 
             expect(res.status).toHaveBeenCalledWith(401);
             expect(res.json).toHaveBeenCalledWith({
-                error: "User could not be authenticated"
+                success: false,
+                message: "Incorrect password. Please try again."
             });
         });
 
@@ -154,7 +156,11 @@ describe("Userprofile Controller", () => {
 
             await userprofileController.getUserDetailsbyEmail(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Error in token generation"
+            });        
         });
     });
 
@@ -189,6 +195,7 @@ describe("Userprofile Controller", () => {
             expect(res.status).toHaveBeenCalledWith(201);
 
             expect(res.json).toHaveBeenCalledWith({
+                message: "Account created successfully!",
                 success: true,
                 token: "mockToken",
                 user: {
@@ -220,7 +227,26 @@ describe("Userprofile Controller", () => {
 
             await userprofileController.createUserProfile(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.status).toHaveBeenCalledWith(500);        
+        });
+
+        it("should return 409 if email already exists", async () => {
+
+            bcrypt.genSalt.mockResolvedValue("salt");
+            bcrypt.hash.mockResolvedValue("hashedpassword");
+
+            Userprofile.createUserProfile.mockRejectedValue({
+                status: 409,
+                message: "An account with this email already exists. Please log in."
+            });
+
+            await userprofileController.createUserProfile(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(409);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "An account with this email already exists. Please log in."
+            });
         });
     });
 
