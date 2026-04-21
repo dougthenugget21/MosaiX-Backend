@@ -41,7 +41,7 @@ class Userprofile {
     // Get by email
     static async getUserDetailsbyEmail(email) {
         const response = await db.query("SELECT u.*, p.*, r.reputation_badge FROM user_details u JOIN profile_details p ON u.user_id = p.user_id JOIN reputation_level r ON p.reputation_id = r.id WHERE u.email = $1;", [email]);
-
+        
         if (response.rows.length !== 1) {
             throw new Error("Cannot find user details with email.");
         }
@@ -81,7 +81,17 @@ class Userprofile {
         } 
         catch (e) {
             await client.query("ROLLBACK");
-            throw e;
+            if (e.code === "23505") {
+                throw {
+                    status: 409,
+                    message: "An account with this email already exists. Please log in.",
+                };
+            }
+            throw {
+                status: 500,
+                message: "Error creating user profile",
+            };
+
         } 
         finally {
             client.release();
