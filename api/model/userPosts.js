@@ -220,7 +220,6 @@ class Posts {
                 WHERE profile_id = $1
                 RETURNING profile_id, reputation_id, total_likes;
                 `,[this.profile_id])
-            console.log(updateBadge.rows[0]);
             await client.query("COMMIT")
             const post = new Posts(response.rows[0])
             return post 

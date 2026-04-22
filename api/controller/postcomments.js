@@ -32,22 +32,22 @@ async function createComment(req, res) {
     const data = req.body;
 
     const result = await Postcomments.createComment(data);
-    res.status(201).json(result);
+    res.status(200).json(result);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(404).json({ error: e.message });
   }
 }
 
 // Update comment
 async function updateComment(req, res) {
   try {
-    const comment_id = req.params.id;
+    const comment_id = req.params.id
     const data = req.body;
     const comment = await Postcomments.getCommentbyID(comment_id);
     const result = await comment.updateComment(data);
     res.status(200).json(result);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(404).json({ error: e.message });
   }
 }
 
@@ -59,7 +59,7 @@ async function deleteComment(req, res) {
     const result = await comment.deleteComment();
     res.status(204).json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(404).json({ error: err.message });
   }
 }
 

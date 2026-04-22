@@ -40,7 +40,7 @@ class Profiledetails {
 
     async updateProfile(data) {
         const response = await db.query("UPDATE profile_details SET user_name = $1, is_private = $2, bio = $3, reputation_id = $4, total_likes= $5 WHERE profile_id = $6 RETURNING *;",
-            [ data.user_name, data.is_private, data.bio, data.reputation_id, data.total_likes]);
+            [ data.user_name, data.is_private, data.bio, data.reputation_id, data.total_likes, this.profile_id]);
         if (response.rows.length != 1) {
             throw new Error("Unable to update profile details.")
         }

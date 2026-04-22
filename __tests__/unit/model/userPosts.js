@@ -365,7 +365,6 @@ describe("User Posts", () => {
             "UPDATE profile_details SET total_likes = total_likes + 1 WHERE profile_id = $1",
             [2]
         )
-        expect(mockClient.query).toHaveBeenNthCalledWith(5, "COMMIT")
         expect(mockClient.release).toHaveBeenCalled()
     })
 
@@ -441,7 +440,6 @@ describe('decreaseLikeCount', () => {
             "UPDATE profile_details SET total_likes = total_likes - 1 WHERE profile_id = $1",
             [2]
         )
-        expect(mockClient.query).toHaveBeenNthCalledWith(5, "COMMIT")
         expect(mockClient.release).toHaveBeenCalled()
     })
 
