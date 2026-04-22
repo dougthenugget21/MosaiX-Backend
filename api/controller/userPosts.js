@@ -44,7 +44,14 @@ async function decreaseLikes(req,res){
         res.status(500).json({'error':err.message})
     }
 }
-
+async function getSavedPosts(req,res){
+    try{
+    const posts = await Posts.getSavedPosts(req.params.id)
+    res.status(200).json(posts)
+    } catch (err) {
+        res.status(500).json({'error':err.message})
+    }
+}
 
 
 async function getByPostId(req,res){
@@ -98,4 +105,4 @@ async function reportPost(req,res){
 }
 
 
-module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts,deletePost,decreaseLikes,reportPost}
+module.exports = {allPosts, createPost,getByProfileId,getByPostId,increaseLikes,getNearbyPosts,deletePost,decreaseLikes,reportPost,getSavedPosts}
