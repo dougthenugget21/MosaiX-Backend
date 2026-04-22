@@ -45,7 +45,7 @@ class Postcomments {
     // Add comment
     static async createComment (data) {
         const {post_id, comment, by_profile_id} = data;
-        if (!data.comment & !data.by_profile_id) 
+        if (!(data.comment && data.by_profile_id)) 
         {
             throw new Error ("Comment details are missing");
         }
