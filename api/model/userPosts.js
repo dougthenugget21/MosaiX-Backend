@@ -59,7 +59,7 @@ class Posts {
 
     // getting all the posts from one specific profileb for their profile
     static async getAllByProfileId(profileId){
-        const response = await db.query(`SELECT user_posts.id,profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date,     STRING_AGG(tag_name,',') as tags
+        const response = await db.query(`SELECT user_posts.id,profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date,STRING_AGG(tag_name,',') as tags
                                         FROM user_posts
                                         JOIN post_tags
                                         ON post_tags.post_id = user_posts.id
@@ -247,7 +247,42 @@ class Posts {
         }
         return response.rows.map(p => new Posts(p))
     } */
+    static async getSavedPosts(profile_id){
+        try{
+            const response = await db.query(`
+                SELECT user_posts.id,user_posts.profile_id,photo_url,longitude,latitude,post_title,post_desc,like_count,created_date, STRING_AGG(tag_name,',') as tags,profilephoto_url,reputation_badge,
+                CASE 
+                WHEN profile_details.is_private = true
+                THEN 'Anonymous'
+                ELSE user_name
+                END as user_name
+                FROM user_posts
+                JOIN post_tags
+                ON post_tags.post_id = user_posts.id
+                JOIN tags
+                ON post_tags.hash_tags = tags.id
+                JOIN saved_posts
+                ON saved_posts.post_id = user_posts.id
+                JOIN profile_details
+                ON profile_details.profile_id = user_posts.profile_id
+                JOIN reputation_level
+                ON reputation_level.id = profile_details.reputation_id
+                WHERE saved_posts.profile_id = $1
+                GROUP BY user_posts.id,profile_details.is_private,profile_details.user_name,profile_details.profilephoto_url,reputation_level.reputation_badge
+                `,[profile_id])
+            let post_data = response.rows
+            post_data.forEach((record) => {
+            let tagArray = record.tags.split(",")       
+            record.tags = tagArray
+            })
+            let posts = post_data.map(p => new Posts(p))
+            console.log(posts);
+            return posts
+        } catch (err) {
+            throw Error(err.message)
+        }
 
+    }
     //Creating a new post
     static async createPost(post_data){
         const {profile_id,photo_url,longitude,latitude,post_title,post_desc,tags} = post_data
