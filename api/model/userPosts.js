@@ -170,7 +170,22 @@ class Posts {
             // insert into liked posts table 
             const likeResponse = await client.query("INSERT INTO liked_posts (profile_id, post_id) VALUES ($1,$2)",[likingProfileId,this.id])
             //increase total likes of the profile who posted the original post
-            const totalLike = await client.query("UPDATE profile_details SET total_likes = total_likes + 1 WHERE profile_id = $1",[this.profile_id])          
+            const totalLike = await client.query("UPDATE profile_details SET total_likes = total_likes + 1 WHERE profile_id = $1",[this.profile_id])
+            const updateBadge = await client.query(`
+                UPDATE profile_details
+                SET reputation_id = (
+                    SELECT rl.id
+                    FROM reputation_level rl
+                    WHERE profile_details.total_likes >= rl.from_count
+                    AND (
+                        rl.to_count IS NULL
+                        OR profile_details.total_likes <= rl.to_count
+                    )
+                    LIMIT 1
+                )
+                WHERE profile_id = $1
+                RETURNING profile_id, reputation_id, total_likes;
+                `,[this.profile_id])          
             const post = new Posts(response.rows[0])
             await client.query("COMMIT")
             return post
@@ -190,6 +205,22 @@ class Posts {
             // insert into liked posts table 
             const likeResponse = await client.query("DELETE FROM liked_posts WHERE profile_id = $1 AND post_id = $2",[unlikeProfileId,this.id])
             const totalLike = await client.query("UPDATE profile_details SET total_likes = total_likes - 1 WHERE profile_id = $1",[this.profile_id])
+            const updateBadge = await client.query(`
+                UPDATE profile_details
+                SET reputation_id = (
+                    SELECT rl.id
+                    FROM reputation_level rl
+                    WHERE profile_details.total_likes >= rl.from_count
+                    AND (
+                        rl.to_count IS NULL
+                        OR profile_details.total_likes <= rl.to_count
+                    )
+                    LIMIT 1
+                )
+                WHERE profile_id = $1
+                RETURNING profile_id, reputation_id, total_likes;
+                `,[this.profile_id])
+            console.log(updateBadge.rows[0]);
             await client.query("COMMIT")
             const post = new Posts(response.rows[0])
             return post 
