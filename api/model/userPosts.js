@@ -79,7 +79,7 @@ class Posts {
             FROM profile_details
             JOIN reputation_level
             ON reputation_level.id = profile_details.reputation_id
-            WHERE profile_details.user_id = $1
+            WHERE profile_details.profile_id = $1
             `,[post_data[0].profile_id])
         
         post_data.forEach((record) => {
